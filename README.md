@@ -87,23 +87,20 @@ Designed for an immersive, native-like experience inside Telegram with **fullscr
 
 ```mermaid
 graph TB
-    subgraph "Client (Static Files)"
-        HTML["index.html<br/>Structure & Markup"]
-        CSS["index.css<br/>Design System & Layout"]
-        JS["app.js<br/>Application Logic"]
+    subgraph "Netlify (All-in-One)"
+        subgraph "Static Files"
+            HTML["index.html<br/>Structure & Markup"]
+            CSS["index.css<br/>Design System & Layout"]
+            JS["app.js<br/>Application Logic"]
+        end
+        subgraph "Serverless Functions"
+            BOT["functions/bot.js<br/>Webhook Handler"]
+            SETUP["functions/setup.js<br/>One-time Setup"]
+        end
     end
 
     subgraph "Telegram SDK"
         SDK["telegram-web-app.js<br/>WebApp Bridge"]
-    end
-
-    subgraph "Bot Server (Node.js)"
-        BOT["bot.js<br/>Polling Bot"]
-    end
-
-    subgraph "Hosting"
-        NETLIFY["Netlify / Vercel<br/>Static Hosting (HTTPS)"]
-        VPS["VPS / Railway<br/>Bot Runtime"]
     end
 
     subgraph "Telegram"
@@ -116,11 +113,9 @@ graph TB
     HTML --> JS
     JS -->|"WebApp API"| SDK
     SDK -->|"Bridge"| TG
-    BOT -->|"web_app URL"| NETLIFY
+    TG -->|"Webhook POST"| BOT
     BOT -->|"Bot API"| TG
     BF -->|"Token"| BOT
-    NETLIFY -->|"Serves"| HTML
-    VPS -->|"Runs"| BOT
 ```
 
 ### Data Flow
@@ -129,12 +124,12 @@ graph TB
 sequenceDiagram
     participant U as User
     participant T as Telegram
-    participant B as Bot Server
+    participant N as Netlify Function
     participant W as WebApp (Mini App)
 
     U->>T: /start
-    T->>B: Message event
-    B->>T: Reply with inline keyboard (web_app URL)
+    T->>N: Webhook POST (update JSON)
+    N->>T: sendMessage (inline keyboard with web_app URL)
     T->>U: Show "Open Wheel of Names" button
     U->>T: Tap button
     T->>W: Open Mini App in WebView
@@ -160,7 +155,7 @@ sequenceDiagram
 | **Markup** | HTML5 | Semantic structure with `viewport-fit=cover` |
 | **Styling** | Vanilla CSS | Design system, glassmorphism, responsive layout |
 | **Logic** | Vanilla JavaScript (ES6+) | IIFE module, Canvas API, animation engine |
-| **Bot** | Node.js + `node-telegram-bot-api` | Telegram Bot API integration |
+| **Bot** | Netlify Functions (Serverless) | Webhook-based Telegram Bot API integration |
 | **SDK** | `telegram-web-app.js` v8.0 | Telegram Mini App bridge |
 | **Storage** | `localStorage` | Client-side persistence |
 | **Rendering** | Canvas 2D API | Wheel rendering & confetti particles |
@@ -180,34 +175,33 @@ sequenceDiagram
 
 ```
 wheel-of-names-app/
-├── index.html          # Main HTML entry point
-├── index.css           # Complete design system & styles
-├── app.js              # Application logic (666 lines)
-│                         ├── Telegram SDK initialization
-│                         ├── Safe-area management
-│                         ├── Canvas wheel renderer
-│                         ├── Spin engine (physics-based)
-│                         ├── Winner detection (angle calculation)
-│                         ├── Name management (CRUD + localStorage)
-│                         ├── Confetti particle system
-│                         ├── Background particles
-│                         └── UI event handlers
-├── bot.js              # Telegram bot script (Node.js)
-├── package.json        # Bot dependencies
+├── index.html                    # Main HTML entry point
+├── index.css                     # Complete design system & styles
+├── app.js                        # Application logic (666 lines)
+├── netlify.toml                  # Netlify configuration
+├── netlify/
+│   └── functions/
+│       ├── bot.js                # Webhook handler (serverless)
+│       └── setup.js              # One-time webhook registration
+├── bot.js                        # Local dev bot (polling mode)
+├── package.json                  # Dependencies
 ├── .agents/
+│   ├── SKILL.md                  # Skill reference
 │   └── workflows/
-│       └── wheel-of-names.md   # Development workflow
-└── README.md           # This file
+│       └── wheel-of-names.md     # Development workflow
+└── README.md                     # This file
 ```
 
 ### File Responsibilities
 
-| File | Lines | Size | Responsibility |
-|------|-------|------|----------------|
-| `app.js` | ~666 | 24KB | All client-side logic in a single IIFE module |
-| `index.css` | ~800 | 18KB | Complete design system, responsive rules, animations |
-| `index.html` | ~110 | 5KB | Markup structure, meta tags, SDK script |
-| `bot.js` | ~64 | 2KB | Telegram bot with `/start` and `/help` commands |
+| File | Purpose |
+|------|---------|
+| `app.js` | All client-side logic in a single IIFE module (666 lines) |
+| `index.css` | Complete design system, responsive rules, animations (800 lines) |
+| `index.html` | Markup structure, meta tags, SDK script |
+| `netlify/functions/bot.js` | **Production** — Serverless webhook handler |
+| `netlify/functions/setup.js` | **One-time** — Registers webhook + bot commands |
+| `bot.js` | **Local dev only** — Polling mode for testing |
 
 ---
 
@@ -255,10 +249,12 @@ npm start
 
 ### Environment Variables
 
-| Variable | Location | Description |
+Set these in the **Netlify Dashboard** → Site settings → Environment variables:
+
+| Variable | Required | Description |
 |----------|----------|-------------|
-| `BOT_TOKEN` | `bot.js:14` | Telegram Bot API token from BotFather |
-| `WEB_APP_URL` | `bot.js:21` | HTTPS URL where the Mini App is deployed |
+| `BOT_TOKEN` | ✅ Yes | Telegram Bot API token from [@BotFather](https://t.me/BotFather) |
+| `WEB_APP_URL` | ❌ Optional | Auto-detected from Netlify site URL if not set |
 
 ### Customization
 
@@ -362,56 +358,52 @@ body.tg-fullscreen {
 
 ---
 
-## Deployment
+## Deployment (Netlify — All-in-One)
 
-### Static Files (Netlify / Vercel)
+The entire app — frontend + bot — runs on **Netlify for free**. No separate server needed!
 
-Deploy only these 3 files:
+### Step 1: Deploy to Netlify
+
+1. Push your code to GitHub
+2. Go to [netlify.com](https://netlify.com) → **Add new site** → **Import an existing project**
+3. Connect your GitHub repo (`superdeddy/wheel-of-names-app`)
+4. Deploy settings (auto-detected from `netlify.toml`):
+   - **Publish directory:** `.`
+   - **Functions directory:** `netlify/functions`
+5. Click **Deploy**
+
+### Step 2: Set Environment Variables
+
+1. Go to **Site configuration** → **Environment variables**
+2. Add:
+   - `BOT_TOKEN` = `your-telegram-bot-token`
+3. **Redeploy** the site (Deploys → Trigger deploy → Deploy site)
+
+### Step 3: Register Webhook (One-Time)
+
+After the site is deployed and environment variables are set:
+
+1. Open your browser and visit:
+   ```
+   https://your-site.netlify.app/setup
+   ```
+2. You should see a ✅ **"Bot Setup Complete!"** confirmation page
+3. This registers the webhook with Telegram — your bot is now live!
+
+### Step 4: Test
+
+1. Open your bot in Telegram
+2. Send `/start`
+3. Tap **"🎡 Open Wheel of Names"** — the app should load from Netlify!
+
+### How It Works
 
 ```
-index.html
-index.css
-app.js
+User sends /start → Telegram → POST to /.netlify/functions/bot → Responds with Mini App button
+User taps button → Telegram opens index.html from Netlify → Mini App runs in WebView
 ```
 
-#### Netlify
-
-```bash
-# Option 1: Drag & drop the project folder on netlify.com
-
-# Option 2: CLI
-npm install -g netlify-cli
-netlify deploy --prod --dir=.
-```
-
-#### Vercel
-
-```bash
-npm install -g vercel
-vercel --prod
-```
-
-#### GitHub Pages
-
-1. Push the repo to GitHub
-2. Go to **Settings → Pages → Source: Deploy from branch**
-3. Select `main` branch, root `/`
-
-### Bot Server (VPS / Railway / Render)
-
-The bot (`bot.js`) must run on a persistent server:
-
-```bash
-# Railway
-railway init
-railway up
-
-# Or on any VPS:
-npm install
-BOT_TOKEN="your-token" node bot.js
-```
-
-> **Important:** Update `WEB_APP_URL` in `bot.js` with your production static hosting URL before deploying the bot.
+> **No VPS, no Railway, no always-on server needed.** The bot only wakes up when someone sends a message, and Netlify's free tier handles it all.
 
 ---
 

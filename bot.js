@@ -1,24 +1,22 @@
 /**
- * Telegram Bot Setup Script for Wheel of Names Mini App
+ * Telegram Bot — LOCAL DEVELOPMENT ONLY (Polling Mode)
  * 
- * This script configures the Telegram bot to serve the Mini App.
- * Run: node bot.js
+ * ⚠️ This file is for local development/testing only.
+ * In production, the bot runs as a Netlify Serverless Function
+ * using webhook mode. See: netlify/functions/bot.js
  * 
- * Prerequisites:
- *   npm install node-telegram-bot-api
+ * Run locally: node bot.js
+ * Prerequisites: npm install node-telegram-bot-api
  */
 
 const TelegramBot = require('node-telegram-bot-api');
 
-// Bot Token from BotFather
-const BOT_TOKEN = '8644627075:AAGy5ILsgN7uYqWOOGIYxvZT2w6cxR_wCz0';
+// Bot Token — reads from environment variable, falls back to hardcoded for local dev
+const BOT_TOKEN = process.env.BOT_TOKEN || '8644627075:AAGy5ILsgN7uYqWOOGIYxvZT2w6cxR_wCz0';
 
-// ⚠️ IMPORTANT: Replace this with your actual deployed URL (must be HTTPS)
-// Examples:
-//   - Vercel:  https://your-app.vercel.app
-//   - Netlify: https://your-app.netlify.app
-//   - GitHub Pages: https://username.github.io/wheel-of-names-app
-const WEB_APP_URL = 'https://qld-childhood-champion-nest.trycloudflare.com';
+// ⚠️ For local dev: Replace with your tunnel URL or localhost
+// In production (Netlify): This is set via Environment Variables
+const WEB_APP_URL = process.env.WEB_APP_URL || 'http://localhost:8080';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 

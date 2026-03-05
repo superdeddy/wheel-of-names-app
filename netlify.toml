@@ -1,0 +1,13 @@
+# Netlify Configuration
+# Wheel of Names — Telegram Mini App
+
+[build]
+  # No build command needed (static files)
+  publish = "."
+  functions = "netlify/functions"
+
+# Redirect for cleaner setup URL (optional)
+[[redirects]]
+  from = "/setup"
+  to = "/.netlify/functions/setup"
+  status = 200

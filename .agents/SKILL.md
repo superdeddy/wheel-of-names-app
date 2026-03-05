@@ -1,6 +1,6 @@
 ---
 name: Wheel of Names Telegram Mini App
-description: A premium fullscreen Telegram Mini App for random name selection, built with vanilla HTML/CSS/JS and Canvas API.
+description: A premium fullscreen Telegram Mini App for random name selection, built with vanilla HTML/CSS/JS and Canvas API. Deployed entirely on Netlify (static + serverless).
 ---
 
 # Wheel of Names — Skill Reference
@@ -9,16 +9,30 @@ description: A premium fullscreen Telegram Mini App for random name selection, b
 
 This skill covers the development and maintenance of the **Wheel of Names** Telegram Mini App — a random name picker with a Canvas-rendered spinning wheel, physics-based animation, winner detection, confetti celebrations, and full Telegram Mini App API integration.
 
+**Deployment**: Entirely on **Netlify** (static files + serverless functions). No separate server needed.
+
 ## Project Path
 ```
 E:\Documents\Google Antigravity\wheel-of-names-app
 ```
 
+## Architecture
+
+The app has two parts, both hosted on Netlify:
+
+1. **Static Files** (`index.html`, `index.css`, `app.js`) — The Mini App UI
+2. **Serverless Functions** (`netlify/functions/bot.js`, `setup.js`) — The Telegram bot (webhook mode)
+
+### Bot: Polling vs Webhook
+
+| Mode | File | Usage |
+|------|------|-------|
+| **Webhook** (production) | `netlify/functions/bot.js` | Runs on Netlify Functions, no server needed |
+| **Polling** (local dev) | `bot.js` | Runs on your computer via `node bot.js` |
+
 ## Core Concepts
 
 ### 1. Telegram Mini App SDK
-
-The app integrates deeply with the Telegram WebApp SDK. Key APIs used:
 
 | API | Purpose | Platform |
 |-----|---------|----------|
@@ -58,9 +72,7 @@ JavaScript sets these on `:root`, consumed by CSS:
 
 ### 2. Canvas Wheel Rendering
 
-The wheel is rendered using the Canvas 2D API:
-
-- **Segments**: Equal-angle arcs colored from a 10-color palette
+- **Segments**: Equal-angle arcs colored from a 25-color palette
 - **Text**: Radially oriented names along segment bisectors
 - **Center**: Gradient-filled circle with decorative border
 - **Resolution**: Uses `devicePixelRatio` for crisp rendering on HiDPI screens
@@ -86,36 +98,40 @@ const winnerIndex = Math.floor(pointerAngle / sliceAngle) % names.length;
 
 **Critical**: The `-Math.PI / 2` offset is essential — without it, the winner calculation will be off by one or more segments.
 
-### 5. Confetti Particle System
+### 5. Netlify Serverless Bot
 
-- 80 particles spawned on winner
-- Random colors from segment palette
-- Gravity simulation: `vy += 0.15` per frame
-- Angular velocity for rotation
-- 3-second lifetime
+The webhook handler (`netlify/functions/bot.js`):
+- Receives POST requests from Telegram
+- Uses native `fetch()` to call Telegram Bot API (no npm dependencies)
+- Reads `BOT_TOKEN` from `process.env`
+- Auto-detects `WEB_APP_URL` from Netlify's site URL
 
-### 6. Design System
-
-| Token | Value |
-|-------|-------|
-| Background | `#0a0a1a` (deep navy) |
-| Accent 1 | `#7c5cfc` (purple) |
-| Accent 2 | `#ff6b9d` (pink) |
-| Accent 3 | `#00d4aa` (teal) |
-| Font | Inter, system fallbacks |
-| Glass BG | `rgba(255,255,255,0.06)` |
-| Border radius | 10-32px scale |
+The setup function (`netlify/functions/setup.js`):
+- One-time registration endpoint: visit `/setup` after deploy
+- Registers webhook URL with Telegram
+- Sets bot commands (`/start`, `/help`)
+- Configures the Mini App menu button
 
 ## File Structure
 
-| File | Lines | Description |
-|------|-------|-------------|
-| `app.js` | ~666 | Single IIFE containing all client logic |
-| `index.css` | ~800 | Complete design system, animations, responsive rules |
-| `index.html` | ~110 | Markup, meta tags, Telegram SDK script include |
-| `bot.js` | ~64 | Node.js Telegram bot (polling mode) |
+| File | Purpose |
+|------|---------|
+| `app.js` | Single IIFE containing all client logic (~666 lines) |
+| `index.css` | Complete design system, animations, responsive rules (~800 lines) |
+| `index.html` | Markup, meta tags, Telegram SDK script include |
+| `netlify/functions/bot.js` | **Production** — Serverless webhook handler |
+| `netlify/functions/setup.js` | **One-time** — Webhook + bot command registration |
+| `netlify.toml` | Netlify config (publish dir, functions dir) |
+| `bot.js` | **Local dev only** — Polling mode bot |
 
 ## Common Tasks
+
+### Deploying to Netlify
+1. Push code to GitHub
+2. Connect repo to Netlify
+3. Set `BOT_TOKEN` in Netlify Environment Variables
+4. Deploy, then visit `https://your-site.netlify.app/setup` once
+5. Test with `/start` in Telegram
 
 ### Adding a new Telegram SDK feature
 1. Check if the API exists: `if (tg.newApiMethod) { ... }`
@@ -128,24 +144,18 @@ const winnerIndex = Math.floor(pointerAngle / sliceAngle) % names.length;
 2. Modify `drawWheel()` function for visual changes
 3. Adjust the Canvas dimensions in `resizeCanvas()`
 
-### Changing spin behavior
-1. Modify `totalDuration` for spin length
-2. Modify total rotation multiplier for speed
-3. Change easing function in the animation loop
-
-### Adding new name management features
-1. Add UI in `index.html` inside `.panel-body`
-2. Style in `index.css` inside the Names Panel section
-3. Add logic in `app.js` inside the Name Management section
-4. Call `saveNames()` after any changes to persist
+### Adding new bot commands
+1. Add handler in `netlify/functions/bot.js` (production)
+2. Add handler in `bot.js` (local dev)
+3. Register the command in `netlify/functions/setup.js`
+4. Visit `/setup` again after deployment
 
 ## Deployment Checklist
 
-- [ ] Update `WEB_APP_URL` in `bot.js` with production URL
-- [ ] Deploy static files (`index.html`, `index.css`, `app.js`) to HTTPS host
-- [ ] Deploy `bot.js` to persistent Node.js runtime
-- [ ] Set bot profile photo via BotFather
-- [ ] Test on both Android and iOS Telegram clients
+- [ ] Set `BOT_TOKEN` in Netlify Environment Variables
+- [ ] Deploy site from GitHub
+- [ ] Visit `/setup` to register webhook
+- [ ] Test `/start` in Telegram on mobile (Android + iOS)
 - [ ] Verify fullscreen mode works on mobile
 - [ ] Verify desktop shows expanded (non-fullscreen) mode
 - [ ] Test winner detection accuracy
