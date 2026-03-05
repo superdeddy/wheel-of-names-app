@@ -9,42 +9,56 @@
  *   WEB_APP_URL - HTTPS URL of the deployed Mini App (auto-detected if not set)
  */
 
+const https = require('https');
+
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 /**
- * Send a message via Telegram Bot API using fetch
+ * Send a message via Telegram Bot API using Node.js https module
  */
-async function sendMessage(chatId, text, options = {}) {
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-    const body = {
-        chat_id: chatId,
-        text: text,
-        parse_mode: 'Markdown',
-        ...options,
-    };
+function sendMessage(chatId, text, options = {}) {
+    return new Promise((resolve, reject) => {
+        const body = JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'Markdown',
+            ...options,
+        });
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        const req = https.request({
+            hostname: 'api.telegram.org',
+            path: `/bot${BOT_TOKEN}/sendMessage`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body),
+            },
+        }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                try { resolve(JSON.parse(data)); }
+                catch (e) { resolve({ ok: false, raw: data }); }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(body);
+        req.end();
     });
-
-    return response.json();
 }
 
 /**
- * Get the Mini App URL — uses WEB_APP_URL env var, 
+ * Get the Mini App URL — uses WEB_APP_URL env var,
  * or auto-detects from the Netlify site URL
  */
 function getWebAppUrl(siteUrl) {
     if (process.env.WEB_APP_URL) {
         return process.env.WEB_APP_URL;
     }
-    // Auto-detect from Netlify's URL (the site root serves the Mini App)
     if (siteUrl) {
         return siteUrl;
     }
-    // Fallback: use Netlify's built-in URL env var
     return process.env.URL || 'https://your-app.netlify.app';
 }
 
@@ -117,7 +131,6 @@ exports.handler = async (event) => {
 
     try {
         const update = JSON.parse(event.body);
-        // Extract the site URL from the request for auto-detection
         const host = event.headers?.host;
         const siteUrl = host ? `https://${host}` : null;
 
@@ -130,7 +143,7 @@ exports.handler = async (event) => {
     } catch (error) {
         console.error('Error processing update:', error);
         return {
-            statusCode: 200, // Always return 200 to Telegram to avoid retries
+            statusCode: 200,
             body: JSON.stringify({ ok: true }),
         };
     }
