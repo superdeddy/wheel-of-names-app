@@ -102,7 +102,7 @@ const winnerIndex = Math.floor(pointerAngle / sliceAngle) % names.length;
 
 The webhook handler (`netlify/functions/bot.js`):
 - Receives POST requests from Telegram
-- Uses native `fetch()` to call Telegram Bot API (no npm dependencies)
+- Uses native Node.js `https` module to call Telegram Bot API (no npm dependencies)
 - Reads `BOT_TOKEN` from `process.env`
 - Auto-detects `WEB_APP_URL` from Netlify's site URL
 

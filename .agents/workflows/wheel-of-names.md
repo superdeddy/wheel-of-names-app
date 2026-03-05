@@ -76,7 +76,7 @@ Just push to `main` — Netlify auto-deploys. No need to re-register webhook.
 ### Bot: Webhook vs Polling
 - **Production (Netlify)**: Uses webhook mode — Telegram sends HTTP POST to `/.netlify/functions/bot`
 - **Local dev**: Uses polling mode — `bot.js` polls Telegram API every few seconds
-- The webhook handler uses native `fetch()` (no npm deps for production)
+- The webhook handler uses native Node.js `https` module (no npm deps for production)
 
 ### Telegram Fullscreen
 - Fullscreen is **only requested on mobile** platforms (`android`, `android_x`, `ios`)
