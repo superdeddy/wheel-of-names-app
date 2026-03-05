@@ -1,0 +1,19 @@
+{
+    "name": "wheel-of-names-app",
+    "version": "1.0.0",
+    "description": "Wheel of Names - Telegram Mini App",
+    "main": "bot.js",
+    "scripts": {
+        "start": "node bot.js",
+        "dev": "npx http-server . -p 8080 -c-1"
+    },
+    "dependencies": {
+        "node-telegram-bot-api": "^0.66.0"
+    },
+    "keywords": [
+        "telegram",
+        "mini-app",
+        "wheel-of-names"
+    ],
+    "license": "MIT"
+}

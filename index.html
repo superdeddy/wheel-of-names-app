@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="color-scheme" content="dark">
+    <title>Wheel of Names</title>
+    <meta name="description"
+        content="Spin the wheel and pick a random name! A fun Telegram Mini App for random selection.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <!-- Background particles -->
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-icon">🎡</div>
+                <div class="header-text">
+                    <h1>Wheel of Names</h1>
+                    <p class="subtitle">Tap to spin & pick a winner!</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Wheel Section -->
+        <section class="wheel-section">
+            <div class="wheel-wrapper" id="wheelWrapper">
+                <div class="wheel-glow"></div>
+                <canvas id="wheelCanvas" width="600" height="600"></canvas>
+                <div class="wheel-pointer">
+                    <svg viewBox="0 0 40 50" fill="none">
+                        <path d="M20 50L0 0H40L20 50Z" fill="url(#pointerGrad)" />
+                        <defs>
+                            <linearGradient id="pointerGrad" x1="20" y1="0" x2="20" y2="50"
+                                gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#FF6B6B" />
+                                <stop offset="1" stop-color="#EE5A24" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <button class="spin-btn" id="spinBtn" aria-label="Spin the wheel">
+                    <span class="spin-btn-text">SPIN</span>
+                    <div class="spin-btn-ring"></div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Names Panel -->
+        <section class="names-panel" id="namesPanel">
+            <div class="panel-header" id="panelToggle">
+                <h2>
+                    <span class="panel-icon">👥</span>
+                    Names
+                    <span class="names-count" id="namesCount">0</span>
+                </h2>
+                <button class="panel-toggle-btn" id="panelToggleBtn" aria-label="Toggle panel">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div class="panel-body" id="panelBody">
+                <div class="add-name-row">
+                    <input type="text" id="nameInput" placeholder="Enter a name..." autocomplete="off" maxlength="30">
+                    <button class="add-btn" id="addBtn" aria-label="Add name">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="names-actions">
+                    <button class="action-btn" id="shuffleBtn" title="Shuffle">🔀 Shuffle</button>
+                    <button class="action-btn" id="clearBtn" title="Clear all">🗑️ Clear All</button>
+                </div>
+                <ul class="names-list" id="namesList"></ul>
+            </div>
+        </section>
+
+        <!-- Signature -->
+        <footer class="app-signature">
+            Built with ❤️ by Super Deddy
+        </footer>
+    </div>
+
+    <!-- Winner Modal -->
+    <div class="modal-overlay" id="winnerModal">
+        <canvas id="confettiCanvas"></canvas>
+        <div class="modal-content">
+            <div class="modal-glow"></div>
+            <div class="winner-emoji">🎉</div>
+            <h2 class="winner-label">Winner!</h2>
+            <div class="winner-name" id="winnerName"></div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="closeModalBtn">OK</button>
+                <button class="modal-btn secondary" id="removeWinnerBtn">Remove & Spin Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
