@@ -13,16 +13,35 @@
  *   BOT_TOKEN - Telegram Bot API token
  */
 
+const https = require('https');
+
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
-async function callTelegramAPI(method, body = {}) {
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/${method}`;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+function callTelegramAPI(method, body = {}) {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify(body);
+
+        const req = https.request({
+            hostname: 'api.telegram.org',
+            path: `/bot${BOT_TOKEN}/${method}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(data),
+            },
+        }, (res) => {
+            let result = '';
+            res.on('data', (chunk) => result += chunk);
+            res.on('end', () => {
+                try { resolve(JSON.parse(result)); }
+                catch (e) { resolve({ ok: false, raw: result }); }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(data);
+        req.end();
     });
-    return response.json();
 }
 
 exports.handler = async (event) => {
